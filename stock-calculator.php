@@ -3,7 +3,7 @@
 Plugin Name: Stock Calculator
 Description: Connects WordPress to Google Sheets, supports safe concurrent usage (sandbox per user).
 Version: 1.0
-Author: Manoj Kumar
+Author: Kavita Kumari
 */
 if (!defined('ABSPATH')) exit;
 
@@ -22,7 +22,7 @@ add_action('wp_ajax_nopriv_run_stock_sheet_process', 'run_stock_sheet_process');
 add_action('wp_ajax_run_stock_sheet_process', 'run_stock_sheet_process');
 
 function run_stock_sheet_process() {
-   // echo "<pre>"; print_r($_POST); die('ddddddd');
+ 
     $portfolio = $_POST['portfolio'];
     $currency = $_POST['currency'];
     $amount = $_POST['amount'];
@@ -31,16 +31,16 @@ function run_stock_sheet_process() {
   
     // ➤ REQUIRED: CHANGE THIS
     if( $portfolio == 'COMPASS'){
-        $sourceSheetId = "1QsDYh3CaB-m3ehOovu_dXBb8kBfR-TsywHfNLVzaAmk"; //Google spreadsheet ID
-        $CalculatorSheetId = '1075580578'; //Id of sheet which should be copied 
+        $sourceSheetId = "1QsDYh3CaB-m3ehOovu_dXBb8kBfR-TsywHfNL"; //Google spreadsheet ID
+        $CalculatorSheetId = '1075'; //Id of sheet which should be copied 
     }elseif( $portfolio == 'ASCENT'){
-        $sourceSheetId = "1RFMxbpIuo2qfYPwaG9v93IwyMf2cwsxSRnwJzfw_ydA"; //Google spreadsheet ID
-        $CalculatorSheetId = '1075580578'; //Id of sheet which should be copied 
+        $sourceSheetId = "1RFMxbpIuo2qfYPwaG9v93IwyMf"; //Google spreadsheet ID
+        $CalculatorSheetId = '10755'; //Id of sheet which should be copied 
       
     }
     elseif( $portfolio == 'ANCHOR'){
-        $sourceSheetId = "1qDXmKxii3QRPX-9w1qGJTOwiPrlrU03vpHITB69aDqA"; //Google spreadsheet ID
-        $CalculatorSheetId = '1075580578'; //Id of sheet which should be copied 
+        $sourceSheetId = "1qDXmKxii3QRPX-9w1qGJTOwiPrlrU"; //Google spreadsheet ID
+        $CalculatorSheetId = '107558'; //Id of sheet which should be copied 
     }
     
     try {
@@ -59,14 +59,13 @@ function run_stock_sheet_process() {
         $driveService  = new Drive($client);
 
         if (empty($sourceSheetId)) {
-            return "❌ ERROR: No sheet ID configured.";
+            return "ERROR: No sheet ID configured.";
         }
 
         
 
        // ✅ Duplicate sheet WITHOUT using Drive storage quota
-        $sheetInfo = $sheetsService->spreadsheets->get($sourceSheetId);
-      //  $firstSheetId = $sheetInfo->sheets[0]->properties->sheetId; // sheet tab ID
+        $sheetInfo = $sheetsService->spreadsheets->get($sourceSheetId);// sheet tab ID
         
         $copyRequest = new Google\Service\Sheets\CopySheetToAnotherSpreadsheetRequest([
             'destinationSpreadsheetId' => $sourceSheetId // duplicate inside same file 
@@ -81,13 +80,11 @@ function run_stock_sheet_process() {
         // The new temporary sheet ID
          $tempSheetId = $newSheet->sheetId;
          $tempSheetName = $newSheet->title;
-        // ✅ Read Data (Example: A1:D20)
-       /* $range = $tempSheetName.'!C4:J10';
-        $rows = $sheetsService->spreadsheets_values->get($sourceSheetId, $range)->getValues();*/
-        //echo "<pre>"; print_r($rows);
+        //Read Data (Example: A1:D20)
+       
         
         
-        // ✅ Update Data (Example: Writes timestamp into A60)
+        //Update Data (Example: Writes timestamp into A60)
         $data = [
             new ValueRange([
                'range' => $tempSheetName.'!C38',
@@ -97,18 +94,6 @@ function run_stock_sheet_process() {
                'range' => $tempSheetName.'!F38',
                 'values' => [[ $amount ]],
             ]),
-          /*  new ValueRange([
-                'range'  => $tempSheetName . "!B5:C5",
-                'values' => [["Value B5", "Value C5"]], // update B5 and C5
-            ]),
-            new ValueRange([
-                'range'  => $tempSheetName . "!D10:F12",
-                'values' => [
-                    ["Row1 Col1", "Row1 Col2", "Row1 Col3"],
-                    ["Row2 Col1", "Row2 Col2", "Row2 Col3"],
-                    ["Row3 Col1", "Row3 Col2", "Row3 Col3"],
-                ],
-            ]),*/
         ];
         
         $batchBody = new BatchUpdateValuesRequest([
@@ -127,7 +112,7 @@ function run_stock_sheet_process() {
             error_log(print_r($response, true));
         
         } catch (Exception $e) {
-            error_log("❌ Batch update FAILED: " . $e->getMessage());
+            error_log("Batch update FAILED: " . $e->getMessage());
         }
 
         //Updated YES/NO in the sheet
@@ -174,28 +159,15 @@ function run_stock_sheet_process() {
             $updateBody
         );
         
-       // echo "✅ Updated Yes/No based on filtered symbols";
-
-
         //Now read updated sheet data
         
-         // ✅ Read Data (Example: A1:D20)
+         //Read Data (Example: A1:D20)
 		 sleep(2); 
         $range = $tempSheetName.'!C4:K33';
         $range1 = $tempSheetName.'!H36:K39';
         $finalStockData = $sheetsService->spreadsheets_values->get($sourceSheetId, $range)->getValues();
         $cashData = $sheetsService->spreadsheets_values->get($sourceSheetId, $range1)->getValues();
         
-        //get array of selected stocks only
-        /*$array1 = array_map('trim', $stocks_val);
-        
-        $finalStockData = array_filter($rows, function ($row) use ($array1) {
-            return isset($row[1]) && in_array(trim($row[1]), $array1, true);
-        });
-        
-        $finalStockData = array_values($finalStockData); // re-index result*/
-  
-       
 		$myData['finalStockData'] = $finalStockData;
 		$myData['cashData'] = $cashData;
 
@@ -221,29 +193,15 @@ function run_stock_sheet_process() {
             error_log("Failed to delete temp sheet tab: " . $e->getMessage());
         }
        
-        //echo "<pre>"; print_r($myData); die('hhh');
-
-       // return "<pre>" . print_r($rows, true) . "</pre>";
         $jsonString = json_encode($myData);
 
         // Output the JSON string
         echo $jsonString; exit;
     } catch (Exception $e) {
-        return "❌ ERROR: " . $e->getMessage();
+        return "ERROR: " . $e->getMessage();
     }
 }
 
-
-/**
- * ✅ Register Shortcode
- 
-function shortcode_stock_calculator() {
-    return run_stock_sheet_process();
-}
-
-add_shortcode("stock_calculator", "shortcode_stock_calculator");
-
-*/
 
 
 
@@ -254,31 +212,13 @@ add_shortcode("stock_calculator", "shortcode_stock_calculator");
 function stock_calculator_form(){
     ob_start();
             // === CONFIG SECTION COMPASS SHEET===
-$compasSpreadsheetId = "1QsDYh3CaB-m3ehOovu_dXBb8kBfR-TsywHfNLVzaAmk";  // <-- Replace this
-$compasPortRange = "Model Portfolio!C4:L20";                // <-- Range or full sheet: Sheet1
+$compasSpreadsheetId = "1QsDYh3CaB-m3ehOovu";  // <-- Replace this Google sheet Id
+$compasPortRange = "Model Portfolio!C4:L20";   // <-- Range or full sheet: Sheet1
 $compasCurrenciesRange = "Curreny Rates!C4:H150"; 
 
 // Fetch data
 $compassModelPortfolio = getStocksCurrency($compasSpreadsheetId, $compasPortRange);
 $compassCurrencies = getStocksCurrency($compasSpreadsheetId, $compasCurrenciesRange);
-
-            // === CONFIG SECTION ASCENT SHEET===
-/*$ascentSpreadsheetId = "1RFMxbpIuo2qfYPwaG9v93IwyMf2cwsxSRnwJzfw_ydA";  // <-- Replace this
-$ascentPortRange = "Model Portfolio!C4:L20";                // <-- Range or full sheet: Sheet1
-$ascentCurrenciesRange = "Curreny Rates!C4:H100"; 
-
-// Fetch data
-$ascentModelPortfolio = getStocksCurrency($ascentSpreadsheetId, $ascentPortRange);
-$ascentCurrencies = getStocksCurrency($ascentSpreadsheetId, $ascentCurrenciesRange);
-
-            // === CONFIG SECTION ANCHOR  SHEET===
-$anchorSpreadsheetId = "1qDXmKxii3QRPX-9w1qGJTOwiPrlrU03vpHITB69aDqA";  // <-- Replace this
-$anchorPortRange = "Model Portfolio!C4:L20";                // <-- Range or full sheet: Sheet1
-$anchorCurrenciesRange = "Curreny Rates!C4:H100"; 
-
-// Fetch data
-$anchorModelPortfolio = getStocksCurrency($anchorSpreadsheetId, $anchorPortRange);
-$anchorCurrencies = getStocksCurrency($anchorSpreadsheetId, $anchorCurrenciesRange);*/
 
 // Output result
     ?>
@@ -599,68 +539,6 @@ $anchorCurrencies = getStocksCurrency($anchorSpreadsheetId, $anchorCurrenciesRan
             });
 			
         });
-    
-       /* //run ajax on checkbox
-        jQuery('body').on("change", ".stockcheck", function(){
-    		var  portfolio = jQuery("#portfolioSelect").val();
-    		var currency = jQuery("#currencySelect").val();
-    		var amount = jQuery("#amountInput").val();
-    
-    		let stockCheck = [];
-            $('input[name="stocks"]:checked').each(function(){
-              stockCheck.push($(this).val());
-            });
-    
-            if (stockCheck.length > 0) {
-             var stocks = stockCheck.join(', ');
-            } else {
-             var stocks = 'No Stock Selected'
-            }
-            form_data = new FormData();
-            form_data.append('portfolio', portfolio);
-            form_data.append('currency', currency);
-            form_data.append('amount', amount);
-            form_data.append('stocks', stocks);
-            form_data.append('action', 'run_stock_sheet_process');
-    
-            jQuery.ajax({
-                url: "<?php echo site_url();?>/wp-admin/admin-ajax.php",
-                type: 'POST',
-                contentType: false,
-                processData: false,
-                data: form_data,
-                success: function (response) {
-                    
-    			   // jQuery(".divclass").val(response); //to add value for input
-    				   // console.log(response);
-    					var data = JSON.parse(response);
-    				    var tbody = $("#table-body");
-                        var tr = '';
-                        data.forEach(function(row) {
-                            console.log(row[5]);
-                            
-                                tr += '<tr>';
-                                tr += '<td scope="row">';
-                                tr += '<div class="form-check">';
-                                tr += '<input class="form-check-input stockcheck" type="checkbox" name="stocks" value="'+row[1]+'" id="stockCheck" ' + (row[5] == 'Yes' ? "checked" : "") + ' />';
-                                tr += '<label class="form-check-label" for="checkDefault">';
-                                tr += row[0];
-                                tr += '</label>';
-                                tr += '</div>';
-                                tr += '</td>';
-                                
-                                
-                                tr += ' <td>'+row[6]+'</td>';
-                                tr += '<td>'+row[7]+'</td>';
-                                tr += '</tr>';
-                        });
-                         tbody.html(tr);
-    				
-                }
-    
-            });
-        });
-        */
     
     
     });
